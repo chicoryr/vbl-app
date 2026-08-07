@@ -118,24 +118,37 @@ export default function DashboardClient({ initialData, tournamentId }: { initial
                 <h1 className="text-2xl font-bold text-white tracking-tight">
                   VBL Tournament Tracker
                 </h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-gray-500">ID:</span>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <span className="text-sm text-gray-400 font-medium">Tournament:</span>
                   <input
                     type="text"
                     value={inputTourneyId}
                     onChange={(e) => setInputTourneyId(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        router.push(`/?id=${inputTourneyId}`);
+                        let val = inputTourneyId.trim();
+                        const match = val.match(/(?:event|tournament)\/(\d+)/);
+                        if (match) val = match[1];
+                        if (val !== tournamentId.toString()) router.push(`/?id=${val}`);
                       }
                     }}
                     onBlur={() => {
-                      if (inputTourneyId !== tournamentId.toString()) {
-                        router.push(`/?id=${inputTourneyId}`);
+                      let val = inputTourneyId.trim();
+                      const match = val.match(/(?:event|tournament)\/(\d+)/);
+                      if (match) val = match[1];
+                      if (val !== tournamentId.toString()) {
+                        setInputTourneyId(val);
+                        router.push(`/?id=${val}`);
+                      } else {
+                        setInputTourneyId(tournamentId.toString());
                       }
                     }}
-                    className="bg-gray-800/60 border border-gray-700 text-gray-300 text-sm rounded px-2 py-0.5 w-20 outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                    placeholder="ID or VolleyballLife URL..."
+                    className="bg-gray-800/80 border border-gray-600 text-gray-200 text-sm rounded-md px-3 py-1 w-64 outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 placeholder:text-gray-500 transition-all shadow-inner"
                   />
+                  <span className="text-xs text-gray-500 italic hidden md:block">
+                    e.g., 39628 or avp.volleyballlife.com/event/39628
+                  </span>
                 </div>
               </div>
             </div>
