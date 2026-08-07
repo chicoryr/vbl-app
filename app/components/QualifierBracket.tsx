@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 
 interface Team {
+  id: number;
   name: string;
   total: number;
   created: string;
@@ -15,26 +16,59 @@ interface QualifierBracketProps {
   qToMd: number;
 }
 
+interface BracketTeam {
+  id: number;
+  seed: number;
+  name: string;
+  fullName: string;
+  points: number;
+  players: { name: string; points: number }[];
+  isBye: boolean;
+}
+
 interface BracketMatch {
   id: string;
   round: number;
   matchIndex: number;
-  team1: { seed: number; name: string; points: number; isBye: boolean } | null;
-  team2: { seed: number; name: string; points: number; isBye: boolean } | null;
+  team1: BracketTeam | null;
+  team2: BracketTeam | null;
   winnerTo?: string;
 }
 
 export default function QualifierBracket({ teams, autoMainDraw, qToMd }: QualifierBracketProps) {
+  const [hoveredTeam, setHoveredTeam] = useState<{
+    key: string;
+    x: number;
+    y: number;
+    team: BracketTeam;
+  } | null>(null);
+  
+  const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = (key: string, x: number, y: number, team: BracketTeam) => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    setHoveredTeam({ key, x, y, team });
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeout.current = setTimeout(() => {
+      setHoveredTeam(null);
+    }, 150);
+  };
+
   const bracketData = useMemo(() => {
     if (!teams || teams.length === 0) return { rounds: [], qTeams: [] };
 
     const pointsSorted = [...teams].sort((a, b) => b.total - a.total);
     
     const qTeams = pointsSorted.slice(autoMainDraw).map((team, index) => ({
+      id: team.id,
       seed: index + 1,
       label: `Q${index + 1}`,
-      name: team.name,
-      points: team.total
+      name: team.name.split('/').map((n) => n.trim().split(/\s+/).pop()).join(' / '),
+      fullName: team.name,
+      points: team.total,
+      players: team.players,
     }));
 
     if (qTeams.length === 0) return { rounds: [], qTeams: [] };
@@ -63,12 +97,17 @@ export default function QualifierBracket({ teams, autoMainDraw, qToMd }: Qualifi
       const team1Obj = qTeams.find(t => t.seed === seed1);
       const team2Obj = qTeams.find(t => t.seed === seed2);
 
+      const toBracketTeam = (obj: typeof team1Obj, seed: number): BracketTeam =>
+        obj
+          ? { id: obj.id, seed, name: obj.name, fullName: obj.fullName, points: obj.points, players: obj.players, isBye: false }
+          : { id: 0, seed, name: 'BYE', fullName: 'BYE', points: 0, players: [], isBye: true };
+
       firstRoundMatches.push({
         id: `r1-m${i}`,
         round: 1,
         matchIndex: i,
-        team1: team1Obj ? { seed: seed1, name: team1Obj.name, points: team1Obj.points, isBye: false } : { seed: seed1, name: 'BYE', points: 0, isBye: true },
-        team2: team2Obj ? { seed: seed2, name: team2Obj.name, points: team2Obj.points, isBye: false } : { seed: seed2, name: 'BYE', points: 0, isBye: true },
+        team1: toBracketTeam(team1Obj, seed1),
+        team2: toBracketTeam(team2Obj, seed2),
       });
     }
 
@@ -243,17 +282,26 @@ export default function QualifierBracket({ teams, autoMainDraw, qToMd }: Qualifi
                   const renderTeamBox = (team: BracketMatch['team1'], isBottom: boolean) => {
                     const boxY = c.y + (isBottom ? TEAM_HEIGHT + MATCH_GAP_Y : 0);
                     const isBye = team?.isBye;
+                    const teamKey = `${match.id}-${isBottom ? 't2' : 't1'}`;
+                    const isHovered = hoveredTeam?.key === teamKey;
                     
                     return (
-                      <g transform={`translate(${c.x}, ${boxY})`} key={`${match.id}-${isBottom ? 't2' : 't1'}`}>
+                      <g
+                        transform={`translate(${c.x}, ${boxY})`}
+                        key={teamKey}
+                        onMouseEnter={() => team && !isBye && handleMouseEnter(teamKey, c.x, boxY, team)}
+                        onMouseLeave={handleMouseLeave}
+                        style={{ cursor: team && !isBye ? 'pointer' : 'default' }}
+                      >
                         <rect
                           width={TEAM_WIDTH}
                           height={TEAM_HEIGHT}
                           rx="4"
-                          fill={isBye ? '#1f293780' : '#1f2937'}
-                          stroke={isBye ? '#374151' : '#374151'}
+                          fill={isBye ? '#1f293780' : isHovered ? '#263344' : '#1f2937'}
+                          stroke={isBye ? '#374151' : isHovered ? '#14b8a6' : '#374151'}
                           strokeWidth="1"
                           strokeDasharray={isBye ? '4 2' : 'none'}
+                          style={{ transition: 'fill 0.15s, stroke 0.15s' }}
                         />
                         {team && !isBye ? (
                           <>
@@ -315,6 +363,55 @@ export default function QualifierBracket({ teams, autoMainDraw, qToMd }: Qualifi
                 );
               })}
             </g>
+          )}
+
+          {/* Tooltip — rendered last so it's always on top */}
+          {hoveredTeam && (
+            <foreignObject
+              x={hoveredTeam.x}
+              y={hoveredTeam.y}
+              width="260"
+              height={TEAM_HEIGHT + 4 + 120}
+              style={{ pointerEvents: 'auto', overflow: 'visible' }}
+              onMouseEnter={() => {
+                if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+              }}
+              onMouseLeave={handleMouseLeave}
+            >
+              {/* Invisible bridge covering the team box + gap */}
+              <div style={{ height: TEAM_HEIGHT + 4, width: '100%' }} />
+              <div
+                style={{
+                  background: '#111827',
+                  border: '1px solid rgba(20, 184, 166, 0.3)',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  fontSize: '12px',
+                  color: '#e5e7eb',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                }}
+              >
+                <div style={{ fontWeight: 600, color: '#14b8a6', marginBottom: '6px' }}>
+                  {hoveredTeam.team.fullName}
+                </div>
+                {hoveredTeam.team.players.map((p, pi) => (
+                  <div key={pi} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                    <span style={{ color: '#d1d5db' }}>{p.name}</span>
+                    <span style={{ color: '#9ca3af', fontFamily: 'monospace' }}>{p.points.toFixed(1)}</span>
+                  </div>
+                ))}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: '6px', paddingTop: '6px' }}>
+                  <a
+                    href={`https://avp.volleyballlife.com/event/39628/team/${hoveredTeam.team.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: '#14b8a6', textDecoration: 'none', fontSize: '11px' }}
+                  >
+                    View on VolleyballLife →
+                  </a>
+                </div>
+              </div>
+            </foreignObject>
           )}
         </svg>
       </div>

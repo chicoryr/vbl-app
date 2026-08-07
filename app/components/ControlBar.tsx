@@ -12,6 +12,8 @@ interface ControlBarProps {
   qToMd: number;
   onQToMdChange: (value: number) => void;
   teamCount: number;
+  lastUpdated?: number | null;
+  isRefreshing?: boolean;
 }
 
 export default function ControlBar({
@@ -23,7 +25,9 @@ export default function ControlBar({
   onAutoMainDrawChange,
   qToMd,
   onQToMdChange,
-  teamCount
+  teamCount,
+  lastUpdated,
+  isRefreshing
 }: ControlBarProps) {
   return (
     <div className="flex flex-row flex-wrap items-center gap-4 p-4 rounded-xl bg-gray-900/40 backdrop-blur-md border border-white/10 shadow-lg">
@@ -83,8 +87,18 @@ export default function ControlBar({
         />
       </div>
 
-      <div className="ml-auto text-sm text-gray-400 font-medium">
-        Teams: <span className="text-white">{teamCount}</span>
+      <div className="ml-auto flex items-center gap-3 text-sm text-gray-400 font-medium">
+        {lastUpdated && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 rounded-lg border border-white/5">
+            <svg className={`w-4 h-4 text-teal-500 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {isRefreshing ? 'Checking for updates...' : `Last loaded: ${new Date(lastUpdated).toLocaleTimeString()}`}
+          </div>
+        )}
+        <div className="px-3 py-1.5 bg-black/40 rounded-lg border border-white/5">
+          Teams: <span className="text-white">{teamCount}</span>
+        </div>
       </div>
     </div>
   );
