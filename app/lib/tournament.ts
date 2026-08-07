@@ -20,14 +20,7 @@ export interface Team {
   players: TeamPlayer[];
 }
 
-export interface ChangeEntry {
-  timestamp: number;
-  gender: string;
-  type: 'team_added' | 'team_dropped' | 'team_undropped' | 'team_waitlisted' | 'team_off_waitlist' | 'points_changed' | 'seed_changed' | 'team_removed';
-  description: string;
-  teamName: string;
-  details?: string;
-}
+
 
 export interface DivisionData {
   id: number;
@@ -38,7 +31,7 @@ export interface DivisionData {
 
 export interface TournamentResult {
   divisions: DivisionData[];
-  changes: ChangeEntry[];
+
   lastUpdated: number;
   error?: string;
 }
@@ -55,105 +48,7 @@ const API_HEADERS: Record<string, string> = {
 
 // ─── In-memory state (resets on server restart) ──────────────────────────────
 
-interface TeamSnapshot {
-  name: string;
-  total: number;
-  seed: number | null;
-  drop: boolean;
-  waitlist: boolean;
-  players: TeamPlayer[];
-}
-
-const previousTeams: Map<number, Map<string, TeamSnapshot>> = new Map();
 const lastChangedTimestamps: Map<number, number> = new Map();
-const changeLog: ChangeEntry[] = [];
-const MAX_CHANGELOG = 200;
-
-// ─── Change detection ────────────────────────────────────────────────────────
-
-function detectChanges(divisionId: number, gender: string, newTeams: Team[]): ChangeEntry[] {
-  const now = Date.now();
-  const changes: ChangeEntry[] = [];
-  const prevMap = previousTeams.get(divisionId);
-
-  // First fetch — just store, no diff
-  if (!prevMap) {
-    const newMap = new Map<string, TeamSnapshot>();
-    for (const t of newTeams) {
-      newMap.set(t.name, { name: t.name, total: t.total, seed: t.seed, drop: t.drop, waitlist: t.waitlist, players: t.players });
-    }
-    previousTeams.set(divisionId, newMap);
-    return changes;
-  }
-
-  const newMap = new Map<string, TeamSnapshot>();
-  const newNames = new Set<string>();
-
-  for (const t of newTeams) {
-    newNames.add(t.name);
-    newMap.set(t.name, { name: t.name, total: t.total, seed: t.seed, drop: t.drop, waitlist: t.waitlist, players: t.players });
-
-    const prev = prevMap.get(t.name);
-    if (!prev) {
-      // New team registered
-      changes.push({
-        timestamp: now, gender, type: 'team_added', teamName: t.name,
-        description: `${t.name} registered`,
-        details: `Total points: ${t.total}`,
-      });
-      continue;
-    }
-
-    // Check drop status
-    if (!prev.drop && t.drop) {
-      changes.push({ timestamp: now, gender, type: 'team_dropped', teamName: t.name, description: `${t.name} dropped` });
-    } else if (prev.drop && !t.drop) {
-      changes.push({ timestamp: now, gender, type: 'team_undropped', teamName: t.name, description: `${t.name} re-entered` });
-    }
-
-    // Check waitlist
-    if (!prev.waitlist && t.waitlist) {
-      changes.push({ timestamp: now, gender, type: 'team_waitlisted', teamName: t.name, description: `${t.name} moved to waitlist` });
-    } else if (prev.waitlist && !t.waitlist) {
-      changes.push({ timestamp: now, gender, type: 'team_off_waitlist', teamName: t.name, description: `${t.name} moved off waitlist` });
-    }
-
-    // Check seed changes
-    if (prev.seed !== t.seed) {
-      const from = prev.seed ?? 'unseeded';
-      const to = t.seed ?? 'unseeded';
-      changes.push({
-        timestamp: now, gender, type: 'seed_changed', teamName: t.name,
-        description: `${t.name} seed changed`,
-        details: `${from} → ${to}`,
-      });
-    }
-
-    // Check points changes per player
-    for (const player of t.players) {
-      const prevPlayer = prev.players.find((p) => p.name === player.name);
-      if (prevPlayer && prevPlayer.points !== player.points) {
-        const diff = player.points - prevPlayer.points;
-        const sign = diff > 0 ? '+' : '';
-        changes.push({
-          timestamp: now, gender, type: 'points_changed', teamName: t.name,
-          description: `${player.name} points updated`,
-          details: `${prevPlayer.points} → ${player.points} (${sign}${diff})`,
-        });
-      }
-    }
-  }
-
-  // Check for removed teams
-  for (const [name] of prevMap) {
-    if (!newNames.has(name)) {
-      changes.push({ timestamp: now, gender, type: 'team_removed', teamName: name, description: `${name} removed from tournament` });
-    }
-  }
-
-  previousTeams.set(divisionId, newMap);
-  return changes;
-}
 
 // ─── Core scraping logic ─────────────────────────────────────────────────────
 
@@ -163,14 +58,14 @@ async function scrapeTournamentData(tournamentId: number = 39628): Promise<Tourn
   try {
     const tourneyRes = await fetch(TOURNAMENT_URL(tournamentId), { headers: API_HEADERS, cache: 'no-store' });
     if (!tourneyRes.ok) {
-      return { divisions: [], changes: [...changeLog], lastUpdated: Date.now(), error: 'Failed to fetch tournament data' };
+      return { divisions: [], lastUpdated: Date.now(), error: 'Failed to fetch tournament data' };
     }
 
     const tourneyData = await tourneyRes.json();
     const rawDivisions: { id: number; gender: { name: string } }[] = tourneyData.divisions ?? [];
 
     if (rawDivisions.length === 0) {
-      return { divisions: [], changes: [...changeLog], lastUpdated: Date.now(), error: 'No divisions found. API may be rate limiting.' };
+      return { divisions: [], lastUpdated: Date.now(), error: 'No divisions found. API may be rate limiting.' };
     }
 
     const divisionResults = await Promise.all(
@@ -203,18 +98,7 @@ async function scrapeTournamentData(tournamentId: number = 39628): Promise<Tourn
               };
             });
 
-          // Detect changes
           const genderName = div.gender?.name ?? 'Unknown';
-          const newChanges = detectChanges(div.id, genderName, teams);
-
-          if (newChanges.length > 0) {
-            changeLog.unshift(...newChanges);
-            // Trim to max length
-            if (changeLog.length > MAX_CHANGELOG) {
-              changeLog.length = MAX_CHANGELOG;
-            }
-            lastChangedTimestamps.set(div.id, Date.now());
-          }
 
           if (!lastChangedTimestamps.has(div.id)) {
             lastChangedTimestamps.set(div.id, Date.now());
@@ -236,17 +120,17 @@ async function scrapeTournamentData(tournamentId: number = 39628): Promise<Tourn
     const divisions = divisionResults.filter((d): d is DivisionData => d !== null);
 
     if (divisions.every((d) => d.teams.length === 0)) {
-      return { divisions, changes: [...changeLog], lastUpdated: Date.now(), error: 'No teams found. API may be rate limiting.' };
+      return { divisions, lastUpdated: Date.now(), error: 'No teams found. API may be rate limiting.' };
     }
 
     console.log(
       `[tournament] Scrape successful: ${divisions.map((d) => `${d.gender}: ${d.teams.length} teams`).join(', ')}`
     );
 
-    return { divisions, changes: [...changeLog], lastUpdated: Date.now() };
+    return { divisions, lastUpdated: Date.now() };
   } catch (error: any) {
     console.error('[tournament] Scraping error:', error);
-    return { divisions: [], changes: [...changeLog], lastUpdated: Date.now(), error: error?.message || 'Internal Server Error' };
+    return { divisions: [], lastUpdated: Date.now(), error: error?.message || 'Internal Server Error' };
   }
 }
 

@@ -107,54 +107,57 @@ export default function DashboardClient({ initialData, tournamentId }: { initial
       {/* Header */}
       <header className="px-6 pt-6 pb-2">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-500/20">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-1 gap-4 md:gap-0">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 w-full">
+              {/* Logo and Title */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center shadow-lg shadow-teal-500/20 shrink-0">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight truncate">
                   VBL Tournament Tracker
                 </h1>
-                <div className="flex items-center gap-3 mt-1.5">
-                  <span className="text-sm text-gray-400 font-medium">Tournament:</span>
-                  <input
-                    type="text"
-                    value={inputTourneyId}
-                    onChange={(e) => setInputTourneyId(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        let val = inputTourneyId.trim();
-                        const match = val.match(/(?:event|tournament)\/(\d+)/);
-                        if (match) val = match[1];
-                        if (val !== tournamentId.toString()) router.push(`/?id=${val}`);
-                      }
-                    }}
-                    onBlur={() => {
+              </div>
+
+              {/* Input Field */}
+              <div className="flex items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
+                <span className="text-sm text-gray-400 font-medium shrink-0">Tournament:</span>
+                <input
+                  type="text"
+                  value={inputTourneyId}
+                  onChange={(e) => setInputTourneyId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
                       let val = inputTourneyId.trim();
                       const match = val.match(/(?:event|tournament)\/(\d+)/);
                       if (match) val = match[1];
-                      if (val !== tournamentId.toString()) {
-                        setInputTourneyId(val);
-                        router.push(`/?id=${val}`);
-                      } else {
-                        setInputTourneyId(tournamentId.toString());
-                      }
-                    }}
-                    placeholder="ID or VolleyballLife URL..."
-                    className="bg-gray-800/80 border border-gray-600 text-gray-200 text-sm rounded-md px-3 py-1 w-64 outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 placeholder:text-gray-500 transition-all shadow-inner"
-                  />
-                  <span className="text-xs text-gray-500 italic hidden md:block">
-                    e.g., 39628 or avp.volleyballlife.com/event/39628
-                  </span>
-                </div>
+                      if (val !== tournamentId.toString()) router.push(`/?id=${val}`);
+                    }
+                  }}
+                  onBlur={() => {
+                    let val = inputTourneyId.trim();
+                    const match = val.match(/(?:event|tournament)\/(\d+)/);
+                    if (match) val = match[1];
+                    if (val !== tournamentId.toString()) {
+                      setInputTourneyId(val);
+                      router.push(`/?id=${val}`);
+                    } else {
+                      setInputTourneyId(tournamentId.toString());
+                    }
+                  }}
+                  placeholder="ID or VolleyballLife URL..."
+                  className="bg-gray-800/80 border border-gray-600 text-gray-200 text-sm rounded-md px-3 py-1.5 w-full md:w-64 outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 placeholder:text-gray-500 transition-all shadow-inner"
+                />
+                <span className="text-xs text-gray-500 italic hidden md:block whitespace-nowrap">
+                  e.g., 39628 or avp.volleyballlife.com/event/39628
+                </span>
               </div>
             </div>
 
             {/* Gender Toggle */}
-            <div className="flex gap-1 bg-gray-900/60 backdrop-blur-md rounded-lg p-1 border border-white/10">
+            <div className="flex gap-1 bg-gray-900/60 backdrop-blur-md rounded-lg p-1 border border-white/10 self-start md:self-auto shrink-0">
               {genders.map((g) => {
                 const div = data.divisions.find((d) => d.gender === g.id);
                 return (
@@ -181,24 +184,11 @@ export default function DashboardClient({ initialData, tournamentId }: { initial
             </div>
           </div>
 
-          {/* Last Changed Indicators */}
-          <Link href="/changes" className="flex gap-4 mt-2 group hover:opacity-80 transition-opacity w-fit">
-            {data.divisions.map((div) => (
-              <div key={div.id} className="flex items-center gap-1.5 text-xs text-gray-500">
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  div.gender === 'Mens' ? 'bg-blue-400' : 'bg-pink-400'
-                }`} />
-                <span className="text-gray-400">{div.gender === 'Mens' ? "Men's" : "Women's"}:</span>
-                <span>last change {timeAgo(div.lastChanged)}</span>
-              </div>
-            ))}
-            <span className="text-xs text-teal-500/70 group-hover:text-teal-400 transition-colors">view log →</span>
-          </Link>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-6 pb-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-6">
         <div className="max-w-7xl mx-auto flex flex-col gap-4">
           {/* Controls */}
           <ControlBar
