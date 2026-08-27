@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function TournamentDashboard({ searchParams }: { searchParams: Promise<{ [key: string]: string | undefined }> }) {
   const params = await searchParams;
-  const tournamentId = params.id ? parseInt(params.id, 10) : 39628;
+  const tournamentId = params.id ? parseInt(params.id, 10) : 40560;
   const initialData = await getCachedTournamentData(tournamentId);
 
   return <DashboardClient initialData={initialData} tournamentId={tournamentId} />;
