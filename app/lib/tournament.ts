@@ -14,6 +14,7 @@ export interface Team {
   id: number;
   name: string;
   total: number;
+  truVolleyTotal: number;
   created: string;
   seed: number | null;
   drop: boolean;
