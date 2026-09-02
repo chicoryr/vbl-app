@@ -5,6 +5,7 @@ import React, { useState, useMemo } from 'react';
 interface Team {
   name: string;
   total: number;
+  truVolleyTotal: number
   created: string;
   players: { name: string; points: number, truVolley: number }[];
 }
@@ -46,8 +47,8 @@ export default function Leaderboard({ teams, sortBy, autoMainDraw }: Leaderboard
       return rankedTeams;
     } else if (sortBy == 'date') {
       return rankedTeams.sort((a, b) => a.created.localeCompare(b.created));
-    }else if (sortby == 'truvolley') {
-      return rankedTeams.sort((a, b) => a.created.localeCompare(b.truVolley));
+    }else if (sortBy == 'truvolley') {
+      return rankedTeams.sort((a, b) => a.created.localeCompare(b.truVolleyTotal));
     }
   }, [teams, sortBy, autoMainDraw]);
 
