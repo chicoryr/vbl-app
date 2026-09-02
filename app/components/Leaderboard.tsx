@@ -34,21 +34,24 @@ export default function Leaderboard({ teams, sortBy, autoMainDraw }: Leaderboard
   const processedTeams = useMemo(() => {
     if (!teams) return [];
     
-    // First, determine ranks based on points sorted descending
+    if (sortBy === 'points') {
     const pointsSorted = [...teams].sort((a, b) => b.total - a.total);
     const rankedTeams = pointsSorted.map((team, index) => {
       const isMD = index < autoMainDraw;
       const rank = isMD ? (index + 1).toString() : `Q${index - autoMainDraw + 1}`;
       return { ...team, rank, isMD };
     });
-
-    // Then sort for display based on sortBy prop
-    if (sortBy === 'points') {
       return rankedTeams;
     } else if (sortBy == 'date') {
       return rankedTeams.sort((a, b) => a.created.localeCompare(b.created));
     }else if (sortBy == 'truVolley') {
-      return rankedTeams.sort((a, b) => b.truVolleyTotal - a.truVolleyTotal);
+      const pointsSorted = [...teams].sort((a, b) => b.total - a.total);
+      const rankedTeams = pointsSorted.map((team, index) => {
+      const isMD = index < autoMainDraw;
+      const rank = isMD ? (index + 1).toString() : `Q${index - autoMainDraw + 1}`;
+      return { ...team, rank, isMD };
+    });
+      return rankedTeams;
     }else{
       return rankedTeams;
     }
