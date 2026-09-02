@@ -6,12 +6,12 @@ interface Team {
   name: string;
   total: number;
   created: string;
-  players: { name: string; points: number }[];
+  players: { name: string; points: number, truVolley: number }[];
 }
 
 interface LeaderboardProps {
   teams: Team[];
-  sortBy: 'points' | 'date';
+  sortBy: 'points' | 'date' | 'truVolley';
   autoMainDraw: number;
 }
 
@@ -44,8 +44,10 @@ export default function Leaderboard({ teams, sortBy, autoMainDraw }: Leaderboard
     // Then sort for display based on sortBy prop
     if (sortBy === 'points') {
       return rankedTeams;
-    } else {
+    } else if (sortBy == 'date') {
       return rankedTeams.sort((a, b) => a.created.localeCompare(b.created));
+    }else if (sortby == 'truvolley') {
+      return rankedTeams.sort((a, b) => a.created.localeCompare(b.truVolley));
     }
   }, [teams, sortBy, autoMainDraw]);
 
