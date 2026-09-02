@@ -5,7 +5,7 @@ import React from 'react';
 interface ControlBarProps {
   onLoad: () => void;
   isLoading: boolean;
-  sortBy: 'points' | 'date';
+  sortBy: 'points' | 'date' | 'truVolley';
   onSortChange: (sort: 'points' | 'date' | 'truVolley') => void;
   autoMainDraw: number;
   onAutoMainDrawChange: (value: number) => void;
