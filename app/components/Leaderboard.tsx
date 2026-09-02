@@ -15,7 +15,7 @@ interface LeaderboardProps {
   sortBy: 'points' | 'date' | 'truVolley';
   autoMainDraw: number;
 }
-
+let rankedTeams = [];
 export default function Leaderboard({ teams, sortBy, autoMainDraw }: LeaderboardProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
@@ -34,25 +34,29 @@ export default function Leaderboard({ teams, sortBy, autoMainDraw }: Leaderboard
   const processedTeams = useMemo(() => {
     if (!teams) return [];
     
-    if (sortBy === 'points') {
+    if (sortBy === 'points')
+    {
     const pointsSorted = [...teams].sort((a, b) => b.total - a.total);
-    const rankedTeams = pointsSorted.map((team, index) => {
+    let rankedTeams = pointsSorted.map((team, index) => {
       const isMD = index < autoMainDraw;
       const rank = isMD ? (index + 1).toString() : `Q${index - autoMainDraw + 1}`;
       return { ...team, rank, isMD };
     });
       return rankedTeams;
-    } else if (sortBy == 'date') {
+    } else if (sortBy == 'date')
+    {
       return rankedTeams.sort((a, b) => a.created.localeCompare(b.created));
-    }else if (sortBy == 'truVolley') {
-      const pointsSorted = [...teams].sort((a, b) => b.total - a.total);
+    }else if (sortBy == 'truVolley')
+    {
+      let pointsSorted = [...teams].sort((a, b) => b.truVolleyTotal - a.truVolleyTotal);
       const rankedTeams = pointsSorted.map((team, index) => {
       const isMD = index < autoMainDraw;
       const rank = isMD ? (index + 1).toString() : `Q${index - autoMainDraw + 1}`;
       return { ...team, rank, isMD };
     });
       return rankedTeams;
-    }else{
+    }else
+    {
       return rankedTeams;
     }
   }, [teams, sortBy, autoMainDraw]);
