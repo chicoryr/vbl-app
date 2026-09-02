@@ -93,6 +93,7 @@ async function scrapeTournamentData(tournamentId: number = 39628): Promise<Tourn
                 id: t.id ?? 0,
                 name: t.name ?? 'Unknown Team',
                 total: players.reduce((sum, p) => sum + p.points, 0),
+                truVolleyTotal: players.reduce((sum, p) => sum + p.truVolley, 0),
                 created: t.dtCreated ?? '',
                 seed: t.seed ?? null,
                 drop: t.drop ?? false,
