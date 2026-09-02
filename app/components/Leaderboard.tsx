@@ -15,7 +15,7 @@ interface LeaderboardProps {
   sortBy: 'points' | 'date' | 'truVolley';
   autoMainDraw: number;
 }
-let rankedTeams: Team[] = [];
+let rankedTeams: any[] = [];
 export default function Leaderboard({ teams, sortBy, autoMainDraw }: LeaderboardProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
