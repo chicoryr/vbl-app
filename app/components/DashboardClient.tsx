@@ -37,7 +37,7 @@ export default function DashboardClient({ initialData, tournamentId }: { initial
 
   const [isPending, startTransition] = useTransition();
   const [activeGender, setActiveGender] = useState<Gender>('Mens');
-  const [sortBy, setSortBy] = useState<'points' | 'date'>('points');
+  const [sortBy, setSortBy] = useState<'points' | 'date' | 'truVolley'>('points');
   const [autoMainDraw, setAutoMainDraw] = useState(12);
   const [qToMd, setQToMd] = useState(4);
   const [activeTab, setActiveTab] = useState<TabId>('leaderboard');
