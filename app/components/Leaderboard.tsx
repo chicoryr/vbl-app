@@ -91,7 +91,7 @@ export default function Leaderboard({ teams, sortBy, autoMainDraw }: Leaderboard
                   <td className="px-6 py-3 font-medium text-gray-400">{team.rank}</td>
                   <td className="px-6 py-3 font-medium text-white">{team.name}</td>
                   <td className="px-6 py-3 text-teal-400 font-mono">{team.total.toFixed(1)}</td>
-                  <td className="px-6 py-3 text-teal-400 font-mono">{team.truVolleyTotal.toFixed(1)}</td>
+                  <td className="px-6 py-3 text-teal-400 font-mono">{team.truVolleyTotal?.toFixed(1)}</td>
                   <td className="px-6 py-3 text-gray-500">{team.created.substring(0, 10)}</td>
                 </tr>
                 {isExpanded && (
