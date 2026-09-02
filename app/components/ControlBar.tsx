@@ -6,7 +6,7 @@ interface ControlBarProps {
   onLoad: () => void;
   isLoading: boolean;
   sortBy: 'points' | 'date';
-  onSortChange: (sort: 'points' | 'date') => void;
+  onSortChange: (sort: 'points' | 'date' | 'truVolley') => void;
   autoMainDraw: number;
   onAutoMainDrawChange: (value: number) => void;
   qToMd: number;
@@ -60,6 +60,12 @@ export default function ControlBar({
           className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${sortBy === 'date' ? 'bg-teal-500 text-white' : 'text-gray-400 hover:text-white'}`}
         >
           Date
+        </button>
+        <button
+          onClick={() => onSortChange('truVolley')}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${sortBy === 'truVolley' ? 'bg-teal-500 text-white' : 'text-gray-400 hover:text-white'}`}
+        >
+          TruVolley
         </button>
       </div>
 
