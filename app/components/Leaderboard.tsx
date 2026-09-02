@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 interface Team {
   name: string;
   total: number;
-  truVolleyTotal: number
+  truVolleyTotal: number;
   created: string;
   players: { name: string; points: number, truVolley: number }[];
 }
