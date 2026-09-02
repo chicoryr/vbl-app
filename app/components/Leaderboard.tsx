@@ -47,8 +47,8 @@ export default function Leaderboard({ teams, sortBy, autoMainDraw }: Leaderboard
       return rankedTeams;
     } else if (sortBy == 'date') {
       return rankedTeams.sort((a, b) => a.created.localeCompare(b.created));
-    }else if (sortBy == 'truvolley') {
-      return rankedTeams.sort((a, b) => a.created.localeCompare(b.truVolleyTotal));
+    }else if (sortBy == 'truVolley') {
+      return rankedTeams.sort((a, b) => a.truVolleyTotal.localeCompare(b.truVolleyTotal));
     }
   }, [teams, sortBy, autoMainDraw]);
 
