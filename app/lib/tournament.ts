@@ -86,7 +86,7 @@ async function scrapeTournamentData(tournamentId: number = 39628): Promise<Tourn
               const players: TeamPlayer[] = (t.players ?? []).map((p: any) => {
                 const truVolley = (p.playerPoints ?? []).find((pp: any) => pp.system === 'TruVolley');
                 const usavpEntry = (p.playerPoints ?? []).find((pp: any) => pp.system === 'USAVP');
-                return { name: p.name ?? '', points: usavpEntry?.total ?? 0, truVolley: truVolley?.tru ?? 0 };
+                return { name: p.name ?? '', points: usavpEntry?.total ?? 0, truVolley: truVolley?.total ?? 0 };
               });
 
               return {
